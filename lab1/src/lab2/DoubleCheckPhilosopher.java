@@ -1,8 +1,8 @@
 package lab2;
 
-public class TwoChopstickCheckPhilosopher extends Philosopher {
+public class DoubleCheckPhilosopher extends Philosopher {
 
-    public TwoChopstickCheckPhilosopher(Stick leftStick, Stick rightStick) {
+    public DoubleCheckPhilosopher(Stick leftStick, Stick rightStick) {
         super(leftStick, rightStick);
     }
 

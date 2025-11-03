@@ -1,19 +1,21 @@
 package lab2;
 
+import java.util.concurrent.Semaphore;
+
 public class Stick {
 
-    private final BinarySemaphore semaphore = new BinarySemaphore();
+    private final Semaphore semaphore = new Semaphore(1);
 
     public boolean isTaken() {
-        return semaphore.isLocked();
+        return semaphore.availablePermits() == 0;
     }
 
     public void take() {
-        semaphore.lock();
+        semaphore.acquireUninterruptibly();
     }
 
     public void release() {
-        semaphore.unlock();
+        semaphore.release();
     }
 
 }

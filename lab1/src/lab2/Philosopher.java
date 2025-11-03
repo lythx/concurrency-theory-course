@@ -12,10 +12,10 @@ public abstract class Philosopher extends Thread {
     private long averageWaitTimeMilliseconds = -1;
     private int waitCount = 0;
 
-    private static final int MIN_EATING_TIME = 1000;
-    private static final int MAX_EATING_TIME = 5000;
-    private static final int MIN_THINKING_TIME = 1000;
-    private static final int MAX_THINKING_TIME = 5000;
+    private static final int MIN_EATING_TIME = 200;
+    private static final int MAX_EATING_TIME = 500;
+    private static final int MIN_THINKING_TIME = 200;
+    private static final int MAX_THINKING_TIME = 500;
 
 
     public Philosopher(Stick leftStick, Stick rightStick) {
@@ -31,8 +31,8 @@ public abstract class Philosopher extends Thread {
             takeChopsticks();
             var endTime = System.nanoTime();
             updateAverageWaitTime(startTime, endTime);
-            releaseChopsticks();
             eat();
+            releaseChopsticks();
         }
     }
 
@@ -47,17 +47,13 @@ public abstract class Philosopher extends Thread {
     protected void think() {
         try {
             Thread.sleep(random.nextInt(MIN_THINKING_TIME, MAX_THINKING_TIME));
-        } catch (InterruptedException e) {
-            System.out.println("Philosopher interrupted when thinking: " + e);
-        }
+        } catch (InterruptedException ignored) {}
     }
 
     protected void eat() {
         try {
             Thread.sleep(random.nextInt(MIN_EATING_TIME, MAX_EATING_TIME));
-        } catch (InterruptedException e) {
-            System.out.println("Philosopher interrupted when eating: " + e);
-        }
+        } catch (InterruptedException ignored) {}
     }
 
     private void updateAverageWaitTime(long startTime, long endTime) {

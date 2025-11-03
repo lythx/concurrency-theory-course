@@ -11,6 +11,7 @@ public class ArbiterPhilosopher extends Philosopher {
 
     @Override
     protected void takeChopsticks() {
+        arbiter.acquireSticksPermission();
         leftStick.take();
         rightStick.take();
     }
@@ -19,6 +20,7 @@ public class ArbiterPhilosopher extends Philosopher {
     protected void releaseChopsticks() {
         leftStick.release();
         rightStick.release();
+        arbiter.notifySticksReleased();
     }
 
 }
