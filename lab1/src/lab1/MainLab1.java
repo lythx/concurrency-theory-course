@@ -1,14 +1,16 @@
+package lab1;
+
 import java.util.List;
 
-public class Main {
+public class MainLab1 {
     public static void main(String[] args) throws InterruptedException {
         var iterations = 10_000_000;
 
 
 
-//        counter = new SynchronizedCounter();
-//        incrementThread = new IncrementThread(counter, iterations);
-//        decrementThread = new DecrementThread(counter, iterations);
+//        counter = new lab1.SynchronizedCounter();
+//        incrementThread = new lab1.IncrementThread(counter, iterations);
+//        decrementThread = new lab1.DecrementThread(counter, iterations);
 //        startTime = System.nanoTime();
 //        incrementThread.start();
 //        decrementThread.start();

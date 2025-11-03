@@ -1,3 +1,5 @@
+package lab1;
+
 public class IncrementThread extends Thread {
 
     private final Counter counter;

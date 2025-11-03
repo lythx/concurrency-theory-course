@@ -1,3 +1,5 @@
+package lab1;
+
 public class Counter {
 
     protected int count = 0;

@@ -1,3 +1,5 @@
+package lab1;
+
 public class SemaphoreSynchronizedCounter extends Counter {
 
     private final BinarySemaphore semaphore = new BinarySemaphore();

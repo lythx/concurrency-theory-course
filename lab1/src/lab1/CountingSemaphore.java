@@ -1,3 +1,5 @@
+package lab1;
+
 public class CountingSemaphore {
 
     private final int maxCount;
