@@ -10,7 +10,7 @@ public class AsymmetricPhilosopher extends Philosopher {
     }
 
     @Override
-    protected void takeChopsticks() {
+    protected void takeChopsticks() throws InterruptedException {
         if (hasEvenNumber) {
             rightStick.take();
             leftStick.take();

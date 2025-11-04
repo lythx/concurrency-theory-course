@@ -10,7 +10,7 @@ public class ArbiterPhilosopher extends Philosopher {
     }
 
     @Override
-    protected void takeChopsticks() {
+    protected void takeChopsticks() throws InterruptedException {
         arbiter.acquireSticksPermission();
         leftStick.take();
         rightStick.take();

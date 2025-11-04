@@ -11,11 +11,12 @@ public abstract class Philosopher extends Thread {
 
     private long averageWaitTimeMilliseconds = -1;
     private int waitCount = 0;
+    private long startWaitTime = -1;
 
-    private static final int MIN_EATING_TIME = 200;
-    private static final int MAX_EATING_TIME = 500;
-    private static final int MIN_THINKING_TIME = 200;
-    private static final int MAX_THINKING_TIME = 500;
+    private static final int MIN_EATING_TIME = 10;
+    private static final int MAX_EATING_TIME = 40;
+    private static final int MIN_THINKING_TIME = 10;
+    private static final int MAX_THINKING_TIME = 40;
 
 
     public Philosopher(Stick leftStick, Stick rightStick) {
@@ -27,10 +28,14 @@ public abstract class Philosopher extends Thread {
     public void run() {
         while (true) {
             think();
-            var startTime = System.nanoTime();
-            takeChopsticks();
-            var endTime = System.nanoTime();
-            updateAverageWaitTime(startTime, endTime);
+            startWaitTime = System.nanoTime();
+            try {
+                takeChopsticks();
+            } catch (InterruptedException e) {
+                updateAverageWaitTime();
+                break;
+            }
+            updateAverageWaitTime();
             eat();
             releaseChopsticks();
         }
@@ -40,7 +45,7 @@ public abstract class Philosopher extends Thread {
         return averageWaitTimeMilliseconds;
     }
 
-    protected abstract void takeChopsticks();
+    protected abstract void takeChopsticks() throws InterruptedException;
 
     protected abstract void releaseChopsticks();
 
@@ -56,8 +61,8 @@ public abstract class Philosopher extends Thread {
         } catch (InterruptedException ignored) {}
     }
 
-    private void updateAverageWaitTime(long startTime, long endTime) {
-        var waitTimeMilliseconds = (endTime - startTime) / 1_000_000;
+    private void updateAverageWaitTime() {
+        var waitTimeMilliseconds = (System.nanoTime() - startWaitTime) / 1_000_000;
         if (waitCount == 0) {
             averageWaitTimeMilliseconds = waitTimeMilliseconds;
             waitCount++;

@@ -7,7 +7,7 @@ public class NaivePhilosopher extends Philosopher {
     }
 
     @Override
-    protected void takeChopsticks() {
+    protected void takeChopsticks() throws InterruptedException {
         leftStick.take();
         rightStick.take();
     }

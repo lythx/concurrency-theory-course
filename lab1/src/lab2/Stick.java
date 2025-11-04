@@ -10,8 +10,8 @@ public class Stick {
         return semaphore.availablePermits() == 0;
     }
 
-    public void take() {
-        semaphore.acquireUninterruptibly();
+    public void take() throws InterruptedException {
+        semaphore.acquire();
     }
 
     public void release() {

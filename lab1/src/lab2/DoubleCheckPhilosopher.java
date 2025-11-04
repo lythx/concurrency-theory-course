@@ -7,7 +7,7 @@ public class DoubleCheckPhilosopher extends Philosopher {
     }
 
     @Override
-    protected void takeChopsticks() {
+    protected void takeChopsticks() throws InterruptedException {
         while (true) {
             leftStick.take();
             if (rightStick.isTaken()) {
