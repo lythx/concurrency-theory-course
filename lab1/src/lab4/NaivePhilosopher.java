@@ -1,4 +1,4 @@
-package lab2;
+package lab4;
 
 public class NaivePhilosopher extends Philosopher {
 
@@ -10,12 +10,6 @@ public class NaivePhilosopher extends Philosopher {
     protected void takeChopsticks() throws InterruptedException {
         leftStick.take();
         rightStick.take();
-    }
-
-    @Override
-    protected void releaseChopsticks() {
-        leftStick.release();
-        rightStick.release();
     }
 
 }

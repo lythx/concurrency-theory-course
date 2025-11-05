@@ -1,10 +1,12 @@
-package lab2;
+package lab4;
 
 public class AsymmetricPhilosopher extends Philosopher {
 
     private final boolean hasEvenNumber;
 
-    public AsymmetricPhilosopher(Stick leftStick, Stick rightStick, int number) {
+    public AsymmetricPhilosopher(
+        Stick leftStick, Stick rightStick, int number
+    ) {
         super(leftStick, rightStick);
         hasEvenNumber = number % 2 == 0;
     }
@@ -19,12 +21,6 @@ public class AsymmetricPhilosopher extends Philosopher {
             leftStick.take();
             rightStick.take();
         }
-    }
-
-    @Override
-    protected void releaseChopsticks() {
-        leftStick.release();
-        rightStick.release();
     }
 
 }

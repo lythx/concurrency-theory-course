@@ -1,4 +1,4 @@
-package lab2;
+package lab4;
 
 import java.util.Random;
 
@@ -9,9 +9,10 @@ public abstract class Philosopher extends Thread {
 
     private final Random random = new Random();
 
-    private long averageWaitTimeMilliseconds = -1;
+    private double averageWaitTimeMilliseconds = -1;
     private int waitCount = 0;
     private long startWaitTime = -1;
+    private boolean isStopped = false;
 
     private static final int MIN_EATING_TIME = 10;
     private static final int MAX_EATING_TIME = 40;
@@ -26,39 +27,41 @@ public abstract class Philosopher extends Thread {
 
     @Override
     public void run() {
-        while (true) {
-            think();
-            startWaitTime = System.nanoTime();
-            try {
+        try {
+            while (!isStopped) {
+                think();
+                startWaitTime = System.nanoTime();
                 takeChopsticks();
-            } catch (InterruptedException e) {
                 updateAverageWaitTime();
-                break;
+                eat();
+                releaseChopsticks();
             }
-            updateAverageWaitTime();
-            eat();
-            releaseChopsticks();
+        } catch (InterruptedException e) {
+            System.out.println("Philosopher interrupted");
         }
     }
 
-    public long getAverageWaitTimeMilliseconds() {
+    public void stopPhilosopher() {
+        isStopped = true;
+    }
+
+    public double getAverageWaitTimeMilliseconds() {
         return averageWaitTimeMilliseconds;
     }
 
     protected abstract void takeChopsticks() throws InterruptedException;
 
-    protected abstract void releaseChopsticks();
-
-    protected void think() {
-        try {
-            Thread.sleep(random.nextInt(MIN_THINKING_TIME, MAX_THINKING_TIME));
-        } catch (InterruptedException ignored) {}
+    protected void releaseChopsticks() {
+        leftStick.release();
+        rightStick.release();
     }
 
-    protected void eat() {
-        try {
-            Thread.sleep(random.nextInt(MIN_EATING_TIME, MAX_EATING_TIME));
-        } catch (InterruptedException ignored) {}
+    private void think() throws InterruptedException {
+        Thread.sleep(random.nextInt(MIN_THINKING_TIME, MAX_THINKING_TIME));
+    }
+
+    private void eat() throws InterruptedException {
+        Thread.sleep(random.nextInt(MIN_EATING_TIME, MAX_EATING_TIME));
     }
 
     private void updateAverageWaitTime() {

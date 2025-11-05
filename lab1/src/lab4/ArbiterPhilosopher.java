@@ -1,4 +1,4 @@
-package lab2;
+package lab4;
 
 public class ArbiterPhilosopher extends Philosopher {
 
@@ -18,8 +18,7 @@ public class ArbiterPhilosopher extends Philosopher {
 
     @Override
     protected void releaseChopsticks() {
-        leftStick.release();
-        rightStick.release();
+        super.releaseChopsticks();
         arbiter.notifySticksReleased();
     }
 

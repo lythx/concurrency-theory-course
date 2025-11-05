@@ -1,4 +1,4 @@
-package lab2;
+package lab4;
 
 public class DoubleCheckPhilosopher extends Philosopher {
 
@@ -17,13 +17,16 @@ public class DoubleCheckPhilosopher extends Philosopher {
                 rightStick.take();
                 break;
             }
-        }
-    }
 
-    @Override
-    protected void releaseChopsticks() {
-        leftStick.release();
-        rightStick.release();
+            rightStick.take();
+            if (leftStick.isTaken()) {
+                rightStick.release();
+            }
+            else {
+                leftStick.take();
+                break;
+            }
+        }
     }
 
 }

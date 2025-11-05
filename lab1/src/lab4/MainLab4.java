@@ -1,23 +1,21 @@
-package lab2;
+package lab4;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class MainLab2 {
+public class MainLab4 {
 
-    public static void main(String[] args) {
-        var nsToTest = List.of(5, 7, 10, 15, 20, 30, 40, 50, 60, 80, 100);
+    public static void main(String[] args) throws IOException {
+        var nsToTest = List.of(5, 7, 10, 20, 30, 40, 60, 100, 200, 300);
 
-        List<Double> naiveResults = new ArrayList<>();
-        List<Double> doubleCheckResults = new ArrayList<>();
-        List<Double> asymmetricResults = new ArrayList<>();
-        List<Double> arbiterResults = new ArrayList<>();
+        List<List<Double>> naiveResults = new ArrayList<>();
+        List<List<Double>> doubleCheckResults = new ArrayList<>();
+        List<List<Double>> asymmetricResults = new ArrayList<>();
+        List<List<Double>> arbiterResults = new ArrayList<>();
         for (var n : nsToTest) {
             naiveResults.add(runNaivePhilosopherSimulation(n));
             doubleCheckResults.add(runDoubleCheckPhilosopherSimulation(n));
@@ -26,23 +24,24 @@ public class MainLab2 {
         }
 
         var names = List.of("naive", "double-check", "asymmetric", "arbiter");
+        var results = List.of(naiveResults, doubleCheckResults, asymmetricResults, arbiterResults);
 
-        try {
-            var file = Paths.get("philosopher-simulation.naive.csv");
-            Files.write(file, naiveResults.stream().map(Object::toString).toList());
-            file = Paths.get("philosopher-simulation.double-check.csv");
-            Files.write(file, naiveResults.stream().map(Object::toString).toList());
-            file = Paths.get("philosopher-simulation.double-check.csv");
-            Files.write(file, naiveResults.stream().map(Object::toString).toList());
-            file = Paths.get("philosopher-simulation.double-check.csv");
-            Files.write(file, naiveResults.stream().map(Object::toString).toList());
-        }
-        catch (IOException e) {
-            System.out.println("Error writing to file: " + e);
+        for (int i = 0; i < names.size(); i++) {
+            var name = names.get(i);
+            var result = results.get(i);
+            var file = Paths.get(String.format("data/philosopher-simulation.%s.csv", name));
+            Files.write(
+                file,
+                result.stream()
+                    .map(list ->
+                        list.stream()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(",")))
+                    .toList());
         }
     }
 
-    public static double runNaivePhilosopherSimulation(int n) {
+    public static List<Double> runNaivePhilosopherSimulation(int n) {
         List<Stick> sticks = IntStream.range(0, n)
             .mapToObj(i -> new Stick())
             .toList();
@@ -54,10 +53,10 @@ public class MainLab2 {
         }
         var simulation = new PhilosopherSimulation(philosophers);
         simulation.run();
-        return simulation.getAverageWaitTimeMilliseconds();
+        return simulation.getAverageWaitTimesMilliseconds();
     }
 
-    public static double runDoubleCheckPhilosopherSimulation(int n) {
+    public static List<Double> runDoubleCheckPhilosopherSimulation(int n) {
         List<Stick> sticks = IntStream.range(0, n)
             .mapToObj(i -> new Stick())
             .toList();
@@ -69,10 +68,10 @@ public class MainLab2 {
         }
         var simulation = new PhilosopherSimulation(philosophers);
         simulation.run();
-        return simulation.getAverageWaitTimeMilliseconds();
+        return simulation.getAverageWaitTimesMilliseconds();
     }
 
-    public static double runAsymmetricPhilosopherSimulation(int n) {
+    public static List<Double> runAsymmetricPhilosopherSimulation(int n) {
         List<Stick> sticks = IntStream.range(0, n)
             .mapToObj(i -> new Stick())
             .toList();
@@ -84,10 +83,10 @@ public class MainLab2 {
         }
         var simulation = new PhilosopherSimulation(philosophers);
         simulation.run();
-        return simulation.getAverageWaitTimeMilliseconds();
+        return simulation.getAverageWaitTimesMilliseconds();
     }
 
-    public static double runArbiterPhilosopherSimulation(int n) {
+    public static List<Double> runArbiterPhilosopherSimulation(int n) {
         List<Stick> sticks = IntStream.range(0, n)
             .mapToObj(i -> new Stick())
             .toList();
@@ -100,7 +99,7 @@ public class MainLab2 {
         }
         var simulation = new PhilosopherSimulation(philosophers);
         simulation.run();
-        return simulation.getAverageWaitTimeMilliseconds();
+        return simulation.getAverageWaitTimesMilliseconds();
     }
 
 }
