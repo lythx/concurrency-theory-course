@@ -182,7 +182,7 @@ def generate_grouped_box_plot(
     )
 
     # Set titles and labels (using Polish as requested in the PDF context)
-    ax.set_title("Porównanie Czasów Oczekiwania Filozofów w Zależności od N")
+    ax.set_title("Czas Oczekiwania Filozofów dla wszystkich N")
     ax.set_ylabel("Średni Czas Oczekiwania [milisekundy]", fontsize=12)
     ax.set_xlabel("Liczba Filozofów (N)", fontsize=12)
 
