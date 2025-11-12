@@ -54,49 +54,68 @@ def compute_D_I(
     return D, I
 
 
-def compute_dependency_graph(word: str, D: set[tuple[str, str]]) -> dict[str, set[str]]:
+def compute_dependency_graph(word: str, D: set[tuple[str, str]]) -> dict[int, set[int]]:
     dependency_graph: dict[int, set[int]] = {}
     for i, char1 in enumerate(word):
         dependency_graph[i] = set()
         for j, char2 in enumerate(word[i + 1 :], start=i + 1):
             if (char1, char2) in D:
                 dependency_graph[i].add(j)
-                # TODO remove unneeded edges
     return dependency_graph
 
 
-def compute_FNF(word: str, dependency_graph: dict[int, set[int]]) -> list[set[str]]:
+def compute_fnf(word: str, dependency_graph: dict[int, set[int]]) -> list[set[str]]:
     fnf: list[set[str]] = []
     computed_chars: set[int] = set()
     for i, char in enumerate(word):
         if i in computed_chars:
             continue
-        fnf.append(set([char]))
-        computed_chars.add(i)
-        dependant_chars = dependant_chars_dfs(i, dependency_graph)
-        for j in range(i + 1, len(word)):
-            if j not in dependant_chars:
-                fnf[-1].add(
-                    word[j]
-                )  # TODO need dependant_chars_dfs for j, will require recursion
+        fnf.append(set())
+        dependant_chars = set()
+        for j in range(i, len(word)):
+            if j not in dependant_chars and j not in computed_chars:
+                fnf[-1].add(word[j])
+                dependant_chars |= dependant_chars_dfs(j, dependency_graph)
                 computed_chars.add(j)
     return fnf
-
 
 def dependant_chars_dfs(
     node: int,
     dependency_graph: dict[int, set[int]],
 ) -> set[int]:
+    result = {node}
     for neighbor in dependency_graph[node]:
-        return {node} | dependant_chars_dfs(neighbor, dependency_graph)
+        result |= dependant_chars_dfs(neighbor, dependency_graph)
+    return result
 
+def stringify_relation(relation: set[(str, str)]) -> str:
+    result = "{"
+    for a, b in sorted(relation):
+        result += f"({a},{b}),"
+    return result[:-1] + "}"
+
+def stringify_fnf(fnf: list[set[str]]) -> str:
+    result = ""
+    for group in fnf:
+        result += f"({''.join(group)})"
+    return result
+
+def stringify_dependency_graph(dependency_graph: dict[int, set[int]]) -> str:
+    result = "digraph g{"
+    pass
 
 if __name__ == "__main__":
-    data = load_data("case1.txt")
+    data = load_data("test_case.txt")
     equations, word = parse_data(data)
     D, I = compute_D_I(equations)
     dependency_graph = compute_dependency_graph(word, D)
+    fnf = compute_fnf(word, dependency_graph)
 
-    print(D)
-    print(I)
-    print(dependency_graph)
+    D_str = stringify_relation(D)
+    I_str = stringify_relation(I)
+    fnf_str = stringify_fnf(fnf)
+    graph_str = stringify_dependency_graph(dependency_graph)
+
+    print(f"D = {D_str}")
+    print(f"I = {I_str}")
+    print(f"FNF([w]) = {fnf_str}")
