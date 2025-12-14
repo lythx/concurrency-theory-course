@@ -1,0 +1,236 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{microtype}
+\DeclareMathOperator*{\bigcurlywedge}{\curlywedge}
+
+\title{Współbieżny algorytm eliminacji Gaussa-Jordana}
+\author{Szymon Żuk}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Część teoretyczna}
+
+W części teoretycznej przyjąłem numerację elementów macierzy od zera, ponieważ ułatwia to indeksowanie w późniejszej implementacji algorytmu.. Wprowadziłem też pivoting, co poprawia stabilność numeryczną algorytmu i rozwiązuje problem dzielenia przez zero.
+
+\subsection{Definicja niepodzielnych zadań}
+
+Niech $M \in \mathbb{R}^{n \times (n+1)}$ będzie macierzą rozszerzoną (z wektorem wyrazów wolnych).
+
+\begin{itemize}
+    \item $A_i$ --- wybór pivota w kolumnie $i$ (element o największej wartości bezwzględnej spośród $M_{k,i}$ dla $k \ge i$)
+          \[
+              p_i = \underset{k \in \{i, i+1, \dots, n-1\}}{\operatorname{argmax}} |M_{k,i}|
+          \]
+    \item $B_{i,j,k}$ --- zamiana elementów $M_{i,j}$ i $M_{k,j}$:
+          \[
+              swap(M_{i,j}, M_{k,j})
+          \]
+    \item $C_{i,k}$ --- obliczenie mnożnika eliminacji dla wiersza $k$:
+          \[
+              m_{k,i} = \frac{M_{k,i}}{M_{i,i}}
+          \]
+    \item $D_{i,j,k}$ --- obliczenie składnika do odejmowania dla elementu $M_{k,j}$:
+          \[
+              d_{i,j,k} = M_{i,j} \cdot m_{k,i}
+          \]
+    \item $E_{i,j}$ --- normalizacja elementu $j$ wiersza $i$:
+          \[
+              M_{i,j} = \frac{M_{i,j}}{M_{i,i}}
+          \]
+    \item $F_{i,j,k}$ --- odejmowanie składnika od elementu $M_{k,j}$:
+          \[
+              M_{k,j} = M_{k,j} - d_{i,j,k}
+          \]
+\end{itemize}
+
+\subsection{Algorytm sekwencyjny}
+
+Algorytm składa się z dwóch etapów: eliminacji dolnej części macierzy oraz eliminacji górnej części macierzy.
+
+\subsubsection{Faza pierwsza}
+
+Faza pierwsza polega na zerowaniu elementów poniżej przekątnej i normalizacji wierszy. Algorytm przetwarza kolejne wiersze $i = 0, 1, \dots, n-2$. Dla ustalonego etapu $i$ wykonywane są następujące zadania:
+\begin{itemize}
+    \item $A_i$
+    \item $B_{i,j,p_i}$; $j = i, i+1, \dots, n$
+    \item $C_{i,k}$; $k = i, i+1, \dots, n-1$
+    \item $D_{i,j,k}$; $j = i, i+1, \dots, n;\ k = i+1, i+2, \dots, n-1$
+    \item $E_{i,j}$; $j = i, i+1, \dots, n$
+    \item $F_{i,j,k}$; $j = i, i+1, \dots, n;\ k = i+1, i+2, \dots, n-1$
+\end{itemize}
+
+Następnie wykonywana jest normalizacja ostatniego wiersza:
+\[
+    E_{n-1,n-1}, E_{n-1,n}
+\]
+
+\subsubsection{Faza druga}
+
+Faza druga polega na zerowaniu elementów powyżej przekątnej. Wiersze przetwarzane są w kolejności $i = n-1, n-2, \dots, 1$. Dla ustalonego etapu $i$ wykonywane są następujące zadania:
+\begin{itemize}
+    \item $C_{i,k}$; $k = i-1, i-2, \dots, 0$
+    \item $D_{i,i,k}$; $k = i-1, i-2, \dots, 0$
+    \item $D_{i,n,k}$; $k = i-1, i-2, \dots, 0$
+    \item $F_{i,i,k}$; $k = i-1, i-2, \dots, 0$
+    \item $F_{i,n,k}$; $k = i-1, i-2, \dots, 0$
+\end{itemize}
+
+\subsection{Alfabet zadań}
+
+Definiuję pomocnicze zbiory indeksów macierzy:
+\[
+    I = \{0, \dots, n-1\}, \qquad J = \{0, \dots, n\}.
+\]
+
+Zbiór zadań $\Sigma$ rozbiłem na podzbiory odpowiadające zakresom indeksów wynikającym z przebiegu algorytmu:
+\[
+    \begin{aligned}
+        \Sigma   & = \Sigma_A \cup \Sigma_B \cup \Sigma_C \cup \Sigma_D \cup \Sigma_E \cup \Sigma_F \cup \Sigma_G \\
+        \Sigma_A & = \{ A_i \mid i \in I \},                                                                      \\
+        \Sigma_B & = \{ B_{i,j,p} \mid i \in I,\ j \in J,\ j \ge i \ \},                                          \\
+        \Sigma_C & = \{ C_{i,k} \mid i \in I,\ k \in I,\ k \ne i \},                                              \\
+        \Sigma_E & = \{ D_{i,j,k} \mid i \in I,\ j \in J,\ k \in I,\ j \ge i,\ k \ne i \},                        \\
+        \Sigma_F & = \{ E_{i,j} \mid i \in I,\ j \in J,\ j \ge i \},                                              \\
+        \Sigma_G & = \{ F_{i,j,k} \mid i \in I,\ j \in J,\ k \in I,\ j \ge i,\ k \ne i \}.
+    \end{aligned}
+\]
+
+
+\subsection{Relacja zależności}
+
+Definiuję pomocnicze podzbiory zbiorów indeksów macierzy:
+\[
+    J_{\ge i} = \{ j \in J \mid j \ge i \}, \quad K_{> i} = \{ k \in I \mid k > i \}, \quad K_{< i} = \{ k \in I \mid k < i \}.
+\]
+
+Relację rozbiłem na cztery grupy podzbiorów.
+
+\subsubsection{Faza pierwsza --- zależności w obrębie etapu}
+
+Dla ustalonego $i = 0, 1, \dots, n-2$ definiuję relację
+\[
+    \begin{aligned}
+        D^{\downarrow}_i = & ~\{ (A_i, B_{i,j,p})         \mid j \in J_{\ge i} \}              \\
+        \cup               & ~\{ (B_{i,i,p}, C_{i,k})         \mid k \in K_{> i} \}            \\
+        \cup               & ~\{ (C_{i,k}, D_{i,j,k})   \mid j \in J_{\ge i},~k \in K_{> i} \} \\
+        \cup               & ~\{ (D_{i,j,k}, E_{i,j,k}) \mid j \in J_{\ge i},~k \in K_{> i} \} \\
+        \cup               & ~\{ (D_{i,j,k}, F_{i,j,k}) \mid j \in J_{\ge i},~k \in K_{> i} \} \\
+    \end{aligned}
+\]
+
+\subsubsection{Faza pierwsza --- zależności pomiędzy etapami}
+
+Dla ustalonego $i = 0, 1, \dots, n-2$ definiuję relację
+\[
+    \begin{aligned}
+        D^{\downarrow}_{i,i+1} = & ~\{ (F_{i,i+1,k}, A_{i+1}) \mid k \in K_{> i} \}                    \\
+        \cup                     & ~\{ (F_{i,j,i+1}, D_{i+1,j,k}) \mid j \in J_{> i},~k \in K_{> i} \} \\
+        \cup                     & ~\{ (F_{i,j,k}, F_{i+1,j,k}) \mid j \in J_{> i},~k \in K_{> i+1} \} \\
+    \end{aligned}
+\]
+
+Definiuję również relację zależności między przedostatnim i ostatnim etapem fazy pierwszej:
+\[
+    D^{\downarrow}_{n-2,n-1} = \{ (F_{n-2,n-1,n-1}, E_{n-1,n-1}), (F_{n-2,n,n-1}, E_{n-1,n}) \}
+\]
+
+\subsubsection{Faza druga --- zależności w obrębie etapu}
+
+Dla ustalonego $i = n-1, n-2, \dots, 1$ definiuję relację
+\[
+    \begin{aligned}
+        D^{\uparrow}_i = & ~\{ (C_{i,k}, D_{i,j,k})   \mid j \in J_{\ge i},~k \in K_{< i} \}  \\
+        \cup             & ~\{ (D_{i,j,k}, F_{i,j,k}) \mid j \in J_{\ge i},~k \in K_{< i} \}.
+    \end{aligned}
+\]
+
+\subsubsection{Faza druga --- zależności pomiędzy etapami}
+
+Dla ustalonego $i = n-1, n-2, \dots, 2$ definiuję relację
+\[
+    D^{\uparrow}_{i,i-1} = \{ (F_{i,j,k}, C_{i-1,k}) \mid j \in J_{\ge i},~k \in K_{< i} \}
+\]
+
+\subsubsection{Pełna relacja zależności}
+
+Pełna relacja zależności ma postać:
+\[
+    D = \operatorname{sym}\Biggl(\Bigl\{\Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)\Bigr\}^{+}\Biggr) \cup I_\Sigma,
+\]
+
+\subsection{Graf zależności diekerta}
+
+Struktura grafu zależności Diekerta $G=(V, E)$ wynika wprost z wcześniej zdefiniowanych podzbiorów relacji zależności.
+\[
+    V = \Sigma,
+    \quad
+    E = \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)
+\]
+
+\subsection{Postać normalna Foaty}
+Niech zbiory zadań wykonywanych równolegle w kolejnych warstwach Foaty będą oznaczone przez
+\[
+    \begin{aligned}
+        \mathcal{A}_i               & = \{ A_i \},                                                                                    & 0 \le i \le n-2, \\
+        \mathcal{B}_i               & = \{ B_{i,j,p_i} \mid j \in J_{\ge i} \},                                                       & 0 \le i \le n-2, \\
+        \mathcal{C}_i^{\downarrow}  & = \{ C_{i,k} \mid k \in K_{> i} \},                                                             & 0 \le i \le n-2, \\
+        \mathcal{DE}_i^{\downarrow} & = \{ D_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{> i} \} \cup \{ E_{i,j} \mid j \in J_{\ge i} \}, & 0 \le i \le n-2, \\
+        \mathcal{F}_i^{\downarrow}  & = \{ F_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{> i} \},                                         & 0 \le i \le n-2, \\
+        \mathcal{E}_{n-1}           & = \{ E_{n-1,j} \mid j \in J_{\ge n-1} \},                                                                          \\
+        \mathcal{C}_i^{\uparrow}    & = \{ C_{i,k} \mid k \in K_{< i} \},                                                             & 1 \le i \le n-1, \\
+        \mathcal{D}_i^{\uparrow}    & = \{ D_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{< i} \},                                         & 1 \le i \le n-1, \\
+        \mathcal{F}_i^{\uparrow}    & = \{ F_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{< i} \},                                         & 1 \le i \le n-1.
+    \end{aligned}
+\]
+
+Postać normalna Foaty przyjmuje zatem formę
+\[
+    \begin{aligned}
+        FNF =
+         & [\mathcal{A}_0]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{B}_0]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{C}_0^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{DE}_0^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{F}_0^{\downarrow}]_{\equiv_I^{\dagger}}      \\
+         & \frown [\mathcal{A}_1]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{B}_1]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{C}_1^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{DE}_1^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{F}_1^{\downarrow}]_{\equiv_I^{\dagger}}      \\
+         & \frown \cdots                                              \\
+         & \frown [\mathcal{A}_{n-2}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{B}_{n-2}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{C}_{n-2}^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{DE}_{n-2}^{\downarrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{F}_{n-2}^{\downarrow}]_{\equiv_I^{\dagger}}  \\
+         & \frown [\mathcal{E}_{n-1}]_{\equiv_I^{\dagger}}            \\
+         & \frown [\mathcal{C}_{n-1}^{\uparrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{D}_{n-1}^{\uparrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{F}_{n-1}^{\uparrow}]_{\equiv_I^{\dagger}}    \\
+         & \frown \cdots                                              \\
+         & \frown [\mathcal{C}_1^{\uparrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{D}_1^{\uparrow}]_{\equiv_I^{\dagger}}
+        \frown [\mathcal{F}_1^{\uparrow}]_{\equiv_I^{\dagger}}.
+    \end{aligned}
+\]
+
+\section{Część implementacyjna}
+
+Implementację zorganizowałem wokół warstw Foaty opisanych w części teoretycznej. Każde zadanie (oprócz A) ma swój kernel CUDA, a kod hosta sekwencyjnie przechodzi po kolejnych warstwach Foaty.
+
+\subsection{Sterowanie na hoście}
+
+Funkcja \texttt{gauss\_jordan\_cuda} w pliku \texttt{gauss\_jordan.cu} utrzymuje macierz w pamięci GPU i za pomocą kerneli z pliku \texttt{kernels.cu} realizuje kolejne warstwy Foaty. Wykorzystuje przy tym dodatkowy wektor na mnożniki eliminacji oraz macierz na składniki do odejmowania. Znajdywanie pivotów odbywa się na CPU.
+
+\subsection{Kernele}
+
+Kernele są odpalane z liczbą wątków równą 256. Każdy kernel realizuje zadanie odpowiadające jednej literze alfabetu zadań. Ze względu na to, że wymiary macierzy mogą nie być wielokrotnością 256 każdy kernel sprawdza, czy jego indeks znajduje się w zakresie macierzy przed wykonaniem obliczeń.
+
+\end{document}
