@@ -5,11 +5,12 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{float}
 \DeclareMathOperator*{\bigcurlywedge}{\curlywedge}
 
 \title{Współbieżny algorytm eliminacji Gaussa-Jordana}
 \author{Szymon Żuk}
-\date{\today}
 
 \begin{document}
 
@@ -17,7 +18,7 @@
 
 \section{Część teoretyczna}
 
-W części teoretycznej przyjąłem numerację elementów macierzy od zera, ponieważ ułatwia to indeksowanie w późniejszej implementacji algorytmu.. Wprowadziłem też pivoting, co poprawia stabilność numeryczną algorytmu i rozwiązuje problem dzielenia przez zero.
+W części teoretycznej przyjąłem numerację elementów macierzy od zera, ponieważ ułatwia to indeksowanie w późniejszej implementacji algorytmu. Wprowadziłem też pivoting, co poprawia stabilność numeryczną algorytmu i rozwiązuje problem dzielenia przez zero.
 
 \subsection{Definicja niepodzielnych zadań}
 
@@ -86,29 +87,27 @@ Faza druga polega na zerowaniu elementów powyżej przekątnej. Wiersze przetwar
 
 Definiuję pomocnicze zbiory indeksów macierzy:
 \[
-    I = \{0, \dots, n-1\}, \qquad J = \{0, \dots, n\}.
+    I = \{0, \dots, n-1\}, \quad I^{\downarrow} = \{0, \dots, n-2\}, \quad I^{\uparrow} = \{1, \dots, n-1\}, \quad J = \{0, \dots, n\}.
+\]
+\[
+    J_{\ge i} = \{ j \in J \mid j \ge i \}, \quad K_{> i} = \{ k \in I \mid k > i \}, \quad K_{< i} = \{ k \in I \mid k < i \}.
 \]
 
 Zbiór zadań $\Sigma$ rozbiłem na podzbiory odpowiadające zakresom indeksów wynikającym z przebiegu algorytmu:
 \[
     \begin{aligned}
-        \Sigma   & = \Sigma_A \cup \Sigma_B \cup \Sigma_C \cup \Sigma_D \cup \Sigma_E \cup \Sigma_F \cup \Sigma_G \\
-        \Sigma_A & = \{ A_i \mid i \in I \},                                                                      \\
-        \Sigma_B & = \{ B_{i,j,p} \mid i \in I,\ j \in J,\ j \ge i \ \},                                          \\
-        \Sigma_C & = \{ C_{i,k} \mid i \in I,\ k \in I,\ k \ne i \},                                              \\
-        \Sigma_E & = \{ D_{i,j,k} \mid i \in I,\ j \in J,\ k \in I,\ j \ge i,\ k \ne i \},                        \\
-        \Sigma_F & = \{ E_{i,j} \mid i \in I,\ j \in J,\ j \ge i \},                                              \\
-        \Sigma_G & = \{ F_{i,j,k} \mid i \in I,\ j \in J,\ k \in I,\ j \ge i,\ k \ne i \}.
+        \Sigma   & = \Sigma_A \cup \Sigma_B \cup \Sigma_C \cup \Sigma_D \cup \Sigma_E \cup \Sigma_F \cup \Sigma_G                                                                \\
+        \Sigma_A & = \{ A_i \mid i \in I \},                                                                                                                                     \\
+        \Sigma_B & = \{ B_{i,j,p} \mid i \in I,\ j \in J_{\ge i}\ \},                                                                                                            \\
+        \Sigma_C & = \{ C_{i,k} \mid i \in I,\ k \in K_{> i} \cup K_{< i} \} ,                                                                                                   \\
+        \Sigma_D & = \{ D_{i,j,k} \mid i \in I^{\downarrow},\ j \in J_{\ge i},\ k \in K_{> i} \} \cup \{ D_{i,j,k} \mid i \in I^{\uparrow},\ j \in \{i, n\},\ k \in K_{< i} \} , \\
+        \Sigma_E & = \{ E_{i,j} \mid i \in I,\ j \in J,\ j \ge i \},                                                                                                             \\
+        \Sigma_F & = \{ F_{i,j,k} \mid i \in I^{\downarrow},\ j \in J_{\ge i},\ k \in K_{> i} \} \cup \{ F_{i,j,k} \mid i \in I^{\uparrow},\ j \in \{i, n\},\ k \in K_{< i} \}
     \end{aligned}
 \]
 
 
 \subsection{Relacja zależności}
-
-Definiuję pomocnicze podzbiory zbiorów indeksów macierzy:
-\[
-    J_{\ge i} = \{ j \in J \mid j \ge i \}, \quad K_{> i} = \{ k \in I \mid k > i \}, \quad K_{< i} = \{ k \in I \mid k < i \}.
-\]
 
 Relację rozbiłem na cztery grupy podzbiorów.
 
@@ -141,13 +140,18 @@ Definiuję również relację zależności między przedostatnim i ostatnim etap
     D^{\downarrow}_{n-2,n-1} = \{ (F_{n-2,n-1,n-1}, E_{n-1,n-1}), (F_{n-2,n,n-1}, E_{n-1,n}) \}
 \]
 
+Oraz relację zależności między ostatnim etapem fazy pierwszej a pierwszym etapem fazy drugiej:
+\[
+    D^{\downarrow\uparrow}_{n-1,n-1} = \{ (E_{n-1,n-1}, C_{n-1,k}) \mid k \in K_{< n-1} \}
+\]
+
 \subsubsection{Faza druga --- zależności w obrębie etapu}
 
 Dla ustalonego $i = n-1, n-2, \dots, 1$ definiuję relację
 \[
     \begin{aligned}
-        D^{\uparrow}_i = & ~\{ (C_{i,k}, D_{i,j,k})   \mid j \in J_{\ge i},~k \in K_{< i} \}  \\
-        \cup             & ~\{ (D_{i,j,k}, F_{i,j,k}) \mid j \in J_{\ge i},~k \in K_{< i} \}.
+        D^{\uparrow}_i = & ~\{ (C_{i,k}, D_{i,j,k})   \mid j \in \{i, n\},~k \in K_{< i} \}  \\
+        \cup             & ~\{ (D_{i,j,k}, F_{i,j,k}) \mid j \in \{i, n\},~k \in K_{< i} \}.
     \end{aligned}
 \]
 
@@ -155,14 +159,14 @@ Dla ustalonego $i = n-1, n-2, \dots, 1$ definiuję relację
 
 Dla ustalonego $i = n-1, n-2, \dots, 2$ definiuję relację
 \[
-    D^{\uparrow}_{i,i-1} = \{ (F_{i,j,k}, C_{i-1,k}) \mid j \in J_{\ge i},~k \in K_{< i} \}
+    D^{\uparrow}_{i,i-1} = \{ (F_{i,j,k}, C_{i-1,k}) \mid j \in \{i, n\},~k \in K_{< i} \}
 \]
 
 \subsubsection{Pełna relacja zależności}
 
 Pełna relacja zależności ma postać:
 \[
-    D = \operatorname{sym}\Biggl(\Bigl\{\Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)\Bigr\}^{+}\Biggr) \cup I_\Sigma,
+    D = \operatorname{sym}\Biggl(\Bigl\{\Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup D^{\downarrow\uparrow}_{n-1,n-1} \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)\Bigr\}^{+}\Biggr) \cup I_\Sigma,
 \]
 
 \subsection{Graf zależności diekerta}
@@ -171,8 +175,29 @@ Struktura grafu zależności Diekerta $G=(V, E)$ wynika wprost z wcześniej zdef
 \[
     V = \Sigma,
     \quad
-    E = \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)
+    E = \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_i\Bigr) \cup \Bigl(\bigcup_{i=0}^{n-2} D^{\downarrow}_{i,i+1}\Bigr) \cup D^{\downarrow\uparrow}_{n-1,n-1} \cup \Bigl(\bigcup_{i=1}^{n-1} D^{\uparrow}_i\Bigr) \cup \Bigl(\bigcup_{i=2}^{n-1} D^{\uparrow}_{i,i-1}\Bigr)
 \]
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{graph1.png}
+    \caption{Fragment grafu Diekerta dla fazy pierwszej}
+    \label{fig:graph1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{graph2.png}
+    \caption{Fragment grafu Diekerta dla przejścia między fazami}
+    \label{fig:graph2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{graph3.png}
+    \caption{Fragment grafu Diekerta dla fazy drugiej}
+    \label{fig:graph3}
+\end{figure}
 
 \subsection{Postać normalna Foaty}
 Niech zbiory zadań wykonywanych równolegle w kolejnych warstwach Foaty będą oznaczone przez
@@ -183,10 +208,10 @@ Niech zbiory zadań wykonywanych równolegle w kolejnych warstwach Foaty będą 
         \mathcal{C}_i^{\downarrow}  & = \{ C_{i,k} \mid k \in K_{> i} \},                                                             & 0 \le i \le n-2, \\
         \mathcal{DE}_i^{\downarrow} & = \{ D_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{> i} \} \cup \{ E_{i,j} \mid j \in J_{\ge i} \}, & 0 \le i \le n-2, \\
         \mathcal{F}_i^{\downarrow}  & = \{ F_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{> i} \},                                         & 0 \le i \le n-2, \\
-        \mathcal{E}_{n-1}           & = \{ E_{n-1,j} \mid j \in J_{\ge n-1} \},                                                                          \\
+        \mathcal{E}_{n-1}           & = \{ E_{n-1,j} \mid j \in \{n-1, n\} \},                                                                           \\
         \mathcal{C}_i^{\uparrow}    & = \{ C_{i,k} \mid k \in K_{< i} \},                                                             & 1 \le i \le n-1, \\
-        \mathcal{D}_i^{\uparrow}    & = \{ D_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{< i} \},                                         & 1 \le i \le n-1, \\
-        \mathcal{F}_i^{\uparrow}    & = \{ F_{i,j,k} \mid j \in J_{\ge i},\ k \in K_{< i} \},                                         & 1 \le i \le n-1.
+        \mathcal{D}_i^{\uparrow}    & = \{ D_{i,j,k} \mid j \in \{i, n\},\ k \in K_{< i} \},                                          & 1 \le i \le n-1, \\
+        \mathcal{F}_i^{\uparrow}    & = \{ F_{i,j,k} \mid j \in \{i, n\},\ k \in K_{< i} \},                                          & 1 \le i \le n-1.
     \end{aligned}
 \]
 
@@ -227,10 +252,10 @@ Implementację zorganizowałem wokół warstw Foaty opisanych w części teorety
 
 \subsection{Sterowanie na hoście}
 
-Funkcja \texttt{gauss\_jordan\_cuda} w pliku \texttt{gauss\_jordan.cu} utrzymuje macierz w pamięci GPU i za pomocą kerneli z pliku \texttt{kernels.cu} realizuje kolejne warstwy Foaty. Wykorzystuje przy tym dodatkowy wektor na mnożniki eliminacji oraz macierz na składniki do odejmowania. Znajdywanie pivotów odbywa się na CPU.
+Funkcja \texttt{gauss\_jordan\_cuda} w pliku \texttt{gauss\_jordan.cu} utrzymuje macierz w pamięci GPU i za pomocą kerneli z pliku \texttt{kernels.cu} realizuje kolejne warstwy Foaty. Wykorzystuje przy tym dodatkowy wektor na mnożniki eliminacji oraz macierz na składniki do odejmowania. Znajdywanie pivotów odbywa się na CPU. Macierz jest reprezentowana przez strukturę `CudaMatrix` i jest zaimplementowana za pomocą 1-wymiarowej tablicy, aby przyspieszyć działanie GPU.
 
 \subsection{Kernele}
 
-Kernele są odpalane z liczbą wątków równą 256. Każdy kernel realizuje zadanie odpowiadające jednej literze alfabetu zadań. Ze względu na to, że wymiary macierzy mogą nie być wielokrotnością 256 każdy kernel sprawdza, czy jego indeks znajduje się w zakresie macierzy przed wykonaniem obliczeń.
+Kernele są uruchamiane z liczbą wątków równą 256. Każdy kernel realizuje zadanie odpowiadające jednej literze alfabetu zadań. Kernel oblicza indeks elementu, który ma przetworzyć na podstawie indeksu wątku i bloku. Ze względu na to, że wymiary macierzy mogą nie być wielokrotnością 256 każdy kernel sprawdza czy jego indeks znajduje się w zakresie macierzy przed wykonaniem obliczeń.
 
 \end{document}

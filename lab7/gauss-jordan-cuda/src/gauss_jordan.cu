@@ -123,25 +123,25 @@ void gauss_jordan_cuda(double *h_matrix, int N)
         return;
     }
 
-    for (int pivot = N - 1; pivot >= 1 && !singular; --pivot)
+    for (int pivot = N - 1; pivot >= 1; pivot--)
     {
-        double upper_pivot_value = 0.0;
-        CUDA_CHECK(cudaMemcpy(&upper_pivot_value,
+        double pivot_value = 0.0;
+        CUDA_CHECK(cudaMemcpy(&pivot_value,
                               d_matrix.data + pivot * d_matrix.cols + pivot,
                               sizeof(double),
                               cudaMemcpyDeviceToHost));
 
         int rows_above = pivot;
-        int cols_span = d_matrix.cols - pivot;
+        constexpr int UPWARD_COLUMN_COUNT = 2;
 
         int row_blocks = (rows_above + THREAD_COUNT - 1) / THREAD_COUNT;
         // C
         kernel_C_computeMultipliers<<<row_blocks, THREAD_COUNT>>>(
-            d_matrix, d_multipliers, pivot, upper_pivot_value, DIRECTION_UP);
+            d_matrix, d_multipliers, pivot, pivot_value, DIRECTION_UP);
         CUDA_CHECK(cudaDeviceSynchronize());
 
         // D
-        int col_blocks = (cols_span + THREAD_COUNT - 1) / THREAD_COUNT;
+        int col_blocks = (UPWARD_COLUMN_COUNT + THREAD_COUNT - 1) / THREAD_COUNT;
         dim3 grid_up(rows_above, col_blocks);
         kernel_D_computeContributions<<<grid_up, THREAD_COUNT>>>(
             d_matrix, d_contributions, d_multipliers, pivot, DIRECTION_UP);

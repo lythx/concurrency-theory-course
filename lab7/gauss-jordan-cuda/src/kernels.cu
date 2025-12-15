@@ -36,11 +36,12 @@ __global__ void kernel_D_computeContributions(
     int row_limit = is_downward ? matrix.rows : pivot;
 
     int column_offset = blockIdx.y * blockDim.x + threadIdx.x;
-    int max_cols = matrix.cols - pivot;
-    int col = pivot + column_offset;
+    int max_cols = is_downward ? (matrix.cols - pivot) : 2;
 
-    if (row < row_limit && column_offset < max_cols && col < matrix.cols)
+    if (row < row_limit && column_offset < max_cols)
     {
+        int col = is_downward ? (pivot + column_offset)
+                              : (column_offset == 0 ? pivot : matrix.cols - 1);
         contributions(row, col) = matrix(pivot, col) * multipliers[row];
     }
 }
@@ -63,11 +64,12 @@ __global__ void kernel_F_eliminate(
     int row_limit = is_downward ? matrix.rows : pivot;
 
     int column_offset = blockIdx.y * blockDim.x + threadIdx.x;
-    int max_cols = matrix.cols - pivot;
-    int col = pivot + column_offset;
+    int max_cols = is_downward ? (matrix.cols - pivot) : 2;
 
-    if (row < row_limit && column_offset < max_cols && col < matrix.cols)
+    if (row < row_limit && column_offset < max_cols)
     {
+        int col = is_downward ? (pivot + column_offset)
+                              : (column_offset == 0 ? pivot : matrix.cols - 1);
         matrix(row, col) -= contributions(row, col);
     }
 }
